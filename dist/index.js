@@ -7,18 +7,25 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 const todos = [
     {
+        id: 1,
         title: 'Test01',
         description: 'This is test todo.'
     },
     {
+        id: 2,
         title: 'Test02',
         description: 'This is test todo.'
     }
 ];
 const typeDefs = `#graphql
     type Todo {
+        id: ID
         title: String
         description: String
+    }
+
+    type Mutation {
+        createTodo(title: String!, description: String): Todo
     }
 
     type Query {
@@ -29,6 +36,18 @@ const resolvers = {
     Query: {
         todos: () => todos,
     },
+    Mutation: {
+        createTodo: (_parent, args) => {
+            let idCount = todos.length + 1;
+            const todo = {
+                id: idCount++,
+                title: args.title,
+                description: args.description
+            };
+            todos.push(todo);
+            return todo;
+        }
+    }
 };
 const app = express();
 const httpServer = http.createServer(app);
