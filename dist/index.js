@@ -5,14 +5,29 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+const todos = [
+    {
+        title: 'Test01',
+        description: 'This is test todo.'
+    },
+    {
+        title: 'Test02',
+        description: 'This is test todo.'
+    }
+];
 const typeDefs = `#graphql
+    type Todo {
+        title: String
+        description: String
+    }
+
     type Query {
-        hello: String
+        todos: [Todo]
     }
 `;
 const resolvers = {
     Query: {
-        hello: () => 'Hello World',
+        todos: () => todos,
     },
 };
 const app = express();
