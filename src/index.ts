@@ -5,7 +5,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { describe } from 'node:test';
+import fs from 'fs';
 
 const todos = [
     {
@@ -19,22 +19,6 @@ const todos = [
         description: 'This is test todo.'
     }
 ]
-
-const typeDefs = `#graphql
-    type Todo {
-        id: ID
-        title: String
-        description: String
-    }
-
-    type Mutation {
-        createTodo(title: String!, description: String): Todo
-    }
-
-    type Query {
-        todos: [Todo]
-    }
-`;
 
 const resolvers = {
     Query: {
@@ -58,7 +42,7 @@ const resolvers = {
 const app = express();
 const httpServer = http.createServer(app);
 const server = new ApolloServer({
-    typeDefs,
+    typeDefs: fs.readFileSync('./src/schema.graphql', 'utf-8'),
     resolvers,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
