@@ -6,6 +6,9 @@ import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import fs from 'fs';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 const todos = [
     {
@@ -22,19 +25,19 @@ const todos = [
 
 const resolvers = {
     Query: {
-        todos: () => todos,
+        todos: async (_parent: any, _args: any, context: any) => {
+            return context.prisma.todo.findMany();
+        },
     },
     Mutation: {
-        createTodo: (_parent: any, args: { title: string; description: string; }) => {
-            let idCount = todos.length + 1;
-            const todo = {
-                id: idCount++,
-                title: args.title,
-                description: args.description
-            };
-
-            todos.push(todo);
-            return todo;
+        createTodo: async (_parent, args, context) => {
+            const newTodo = context.prisma.todo.create({
+                data: {
+                    title: args.title,
+                    description: args.description
+                }
+            });
+            return newTodo;
         }
     }
 };
@@ -51,7 +54,12 @@ await server.start()
 app.use(
     cors(),
     bodyParser.json(),
-    expressMiddleware(server),
+    expressMiddleware(server, {
+        context: async ({ req }) => ({
+            ...req,
+            prisma
+        })
+    }),
 );
 
 await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));

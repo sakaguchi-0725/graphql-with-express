@@ -6,6 +6,8 @@ import http from 'http';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import fs from 'fs';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 const todos = [
     {
         id: 1,
@@ -20,18 +22,19 @@ const todos = [
 ];
 const resolvers = {
     Query: {
-        todos: () => todos,
+        todos: async (_parent, _args, context) => {
+            return context.prisma.todo.findMany();
+        },
     },
     Mutation: {
-        createTodo: (_parent, args) => {
-            let idCount = todos.length + 1;
-            const todo = {
-                id: idCount++,
-                title: args.title,
-                description: args.description
-            };
-            todos.push(todo);
-            return todo;
+        createTodo: async (_parent, args, context) => {
+            const newTodo = context.prisma.todo.create({
+                data: {
+                    title: args.title,
+                    description: args.description
+                }
+            });
+            return newTodo;
         }
     }
 };
@@ -43,6 +46,11 @@ const server = new ApolloServer({
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 await server.start();
-app.use(cors(), bodyParser.json(), expressMiddleware(server));
+app.use(cors(), bodyParser.json(), expressMiddleware(server, {
+    context: async ({ req }) => ({
+        ...req,
+        prisma
+    })
+}));
 await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve));
 console.log(`🚀 Server ready at http://localhost:4000`);
